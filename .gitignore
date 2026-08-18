@@ -30,3 +30,4 @@ yarn-error.log*
 
 # the real StoryGraph export — never commit personal reading history (D13)
 /zzz/storygraph.csv
+.env*
