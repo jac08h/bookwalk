@@ -13,9 +13,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Bookwalk",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Bookwalk",
+    template: "%s — Bookwalk",
+  },
   description: "Turn your reading history into a walkable 3D library.",
+  openGraph: {
+    title: "Bookwalk",
+    description: "Turn your reading history into a walkable 3D library.",
+    siteName: "Bookwalk",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bookwalk",
+    description: "Turn your reading history into a walkable 3D library.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

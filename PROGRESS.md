@@ -9,7 +9,7 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - [x] M2 — Viewer package (stop-and-look checkpoint)
 - [x] M3 — Create flow, client-only
 - [x] M4 — Persistence & sharing
-- [ ] M5 — Launch readiness
+- [x] M5 — Launch readiness (partial — see notes)
 
 ## Needs Jakub
 
@@ -64,6 +64,16 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - `apps/web/.env.local` is now a symlink to the repo-root `.env.local` — Next.js only reads env files from the app directory it builds from, not the monorepo root, so local `npm run build`/`start` were silently missing the Upstash credentials until I found and fixed this. Vercel's own deployed env vars (set in M0) are unaffected by this — that's a separate mechanism.
 
 **Needs Jakub**: `/browse` has no example library until you decide to publish your own and set `BROWSE_EXAMPLE_SLUG` (and optionally `BROWSE_EXAMPLE_NAME`) in Vercel's env vars. This is deliberately not something I did for you — publishing your real reading history to a public, permanent URL is exactly the kind of call the plan tells me to leave to you when it's irreversible-ish and personal.
+
+### M5 — mostly done
+- OG share images via `next/og`'s `ImageResponse` (Next 16 ships this built in — no separate `@vercel/og` package needed, superseding what D22 assumed): a site-wide default (`app/opengraph-image.tsx`) and a real per-library one (`app/l/[slug]/opengraph-image.tsx`) showing the actual display name and book count, both verified as real 1200×630 PNGs.
+- **Found a real bug writing these**: Satori (the renderer behind `ImageResponse`) throws if any multi-child `<div>` lacks an explicit `display` style — `<div>{name}&apos;s Library</div>` has two child nodes (the expression and the trailing text) and crashed the route with "failed to pipe response" for every request, silently (curl just got an empty reply, no useful error in the response itself — had to check the server's own stdout to find the real cause). Browsers don't enforce this, so it wouldn't have shown up in a quick local look at the JSX; only actually fetching the image route surfaced it. Fixed by collapsing each into a single template-literal string child. Worth remembering: **treat `ImageResponse` JSX as CSS-Satori, not real DOM** — always give every element an explicit `display`, don't assume anything that looks fine as HTML is fine here.
+- Meta tags: `metadataBase` (using `VERCEL_PROJECT_PRODUCTION_URL` so OG image URLs resolve correctly on whatever `*.vercel.app` URL is current — no domain yet per D2), OpenGraph + Twitter card metadata site-wide and per-library.
+- Error boundaries: root `error.tsx` (try again / go home) and `not-found.tsx`, both plain and on-brand rather than Next's default. `/l/[slug]` already 404s cleanly via `notFound()` (built in M4) rather than crashing on an unknown slug.
+- WebGL-unavailable fallback: **actually tested it**, not just read the code — patched `HTMLCanvasElement.prototype.getContext` to simulate a real no-WebGL browser and confirmed `.bw-fallback` shows with a clear, on-brand message (screenshot taken). This closes the "did not verify" gap noted in M2.
+- Short `/about` page, linked from the landing page footer.
+- Abuse controls were already fully done in M4 (rate limit, size guards, admin delete) — D30's checklist is complete.
+- **Not done, and explicitly out of scope for me tonight**: a domain (D2 says ship on `*.vercel.app`, buy one only once someone else has published a library — that's a purchase decision, not mine to make). Everything else in M5's one-line scope (OG images, meta tags, error boundaries, WebGL fallback, abuse controls, about page) is done.
 
 ### M1 — done
 - Real `parseStoryGraphCsv`/`buildManifest`, all field-normalization rules from manifest-schema.md §2.5.

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-950 px-6 py-24 text-zinc-50">
+    <div className="relative flex flex-1 flex-col items-center justify-center bg-zinc-950 px-6 py-24 text-zinc-50">
       <div className="flex max-w-2xl flex-col items-center text-center">
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Bookwalk
@@ -26,6 +26,13 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      <Link
+        href="/about"
+        className="absolute bottom-8 text-xs text-zinc-600 underline hover:text-zinc-400"
+      >
+        About
+      </Link>
     </div>
   );
 }

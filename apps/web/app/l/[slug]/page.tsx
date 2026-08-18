@@ -11,9 +11,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const manifest = await getLibrary(slug);
   if (!manifest) return { title: "Library not found" };
+  const title = `${manifest.displayName}'s Library`;
+  const description = `Walk through a library of ${manifest.books.length} books.`;
   return {
-    title: `${manifest.displayName}'s Library — Bookwalk`,
-    description: `Walk through a library of ${manifest.books.length} books.`,
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
