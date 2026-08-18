@@ -32,3 +32,6 @@ yarn-error.log*
 /zzz/
 
 .env*
+
+# viewer dev-page manifests are generated from the real StoryGraph export — never commit (D13)
+packages/viewer/dev/*manifest*.json

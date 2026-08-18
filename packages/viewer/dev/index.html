@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Viewer dev</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #000; }
+    #app { position: fixed; inset: 0; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/node_modules/three/build/three.module.js",
+      "three/addons/": "/node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.__errors = [];
+    window.addEventListener("error", (e) => {
+      window.__errors.push(String(e.message) + " @ " + e.filename + ":" + e.lineno);
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      window.__errors.push("unhandledrejection: " + String(e.reason && e.reason.stack || e.reason));
+    });
+  </script>
+  <script type="module">
+    import { createLibrary } from "../src/index.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const manifestPath = params.get("manifest") || "./manifest.json";
+
+    fetch(manifestPath)
+      .then((r) => r.json())
+      .then((manifest) => {
+        window.__manifest = manifest;
+        window.__createLibrary = createLibrary;
+        const root = document.getElementById("app");
+        const handle = createLibrary(root, manifest, {
+          touchMode: params.get("touch") === "1" ? "force" : "auto",
+          onReady: () => {
+            window.__LIBRARY_READY = true;
+          },
+        });
+        window.__library = handle;
+      })
+      .catch((err) => {
+        document.body.innerHTML = "<pre style=\"color:#fff\">" + err.stack + "</pre>";
+      });
+  </script>
+</body>
+</html>
