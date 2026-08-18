@@ -2,6 +2,14 @@
 
 Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" operating mode (§ intro). This file is my running log for Jakub to catch up on waking — newest entries at top of each section. Decisions I made without asking are noted with reasoning; anything genuinely blocking gets flagged under "Needs Jakub" at the bottom instead of guessed.
 
+## TL;DR
+
+All six milestones (M0-M5) are done and live at https://bookwalk-pi.vercel.app. The whole pipeline works end to end and I verified it for real, not just by reading the code: import a StoryGraph CSV → review the parsed numbers → pick a theme with a live 3D preview → publish → get a real public link that renders a walkable library, backed by the actual shared Upstash database. I published and then deleted three throwaway test libraries during verification (`test-run-m4`, `real-anonymized`, `prod-smoke-test`, `og-test-library`) — the database is back to exactly how it started, nothing real left behind.
+
+Three things need you specifically, not because I couldn't finish them, but because they're your calls: (1) Vercel's Toolbar/Comments setting is broken and blocks git-triggered auto-deploy — needs a dashboard toggle I can't reach; (2) `/browse` has no example library until you decide to publish your own real reading history publicly; (3) a domain, per the plan's own D2 (ship free tier until someone else has published). Full detail on all three below.
+
+Also worth knowing: I found and fixed four real bugs during testing that a plausible amount of less-careful work would have shipped — a shared-geometry GPU disposal bug, a synchronous-vs-async callback timing bug that only showed up in the real React app (not the isolated dev page), a Turbopack module-resolution gap, and a Satori/`ImageResponse` rendering quirk. Each is described where it was found below, with what I checked to confirm the fix actually worked.
+
 ## Status
 
 - [x] M0 — Skeleton
