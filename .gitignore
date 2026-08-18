@@ -28,6 +28,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# the real StoryGraph export — never commit personal reading history (D13)
-/zzz/storygraph.csv
+# scratch / temp files (coding conventions: zzz is scratch space, never committed)
+/zzz/
+
 .env*
