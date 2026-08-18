@@ -1,0 +1,17 @@
+{
+  "name": "bookwalk",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "test": "vitest run",
+    "lint": "npm run lint --workspace=apps/web"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@bw/viewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./types/index.d.ts",
+  "dependencies": {
+    "three": "0.185.1"
+  }
+}

@@ -1,0 +1,32 @@
+# env files
+.env
+.env.local
+.env.*.local
+
+# dependencies
+node_modules/
+
+# build outputs
+.next/
+out/
+dist/
+build/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# the real StoryGraph export — never commit personal reading history (D13)
+/zzz/storygraph.csv
