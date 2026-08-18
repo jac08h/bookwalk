@@ -8,12 +8,16 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - [x] M1 — Importer
 - [x] M2 — Viewer package (stop-and-look checkpoint)
 - [x] M3 — Create flow, client-only
-- [ ] M4 — Persistence & sharing
+- [x] M4 — Persistence & sharing
 - [ ] M5 — Launch readiness
 
 ## Needs Jakub
 
 - **Vercel Toolbar / preview-comments is broken for this project, git-triggered auto-deploys will fail.** Every deploy that goes through Vercel's normal remote build (i.e. anything triggered by a `git push`, not `vercel deploy --prebuilt`) fails at the final "Deploying outputs..." step with: `Cannot patch preview comments when immutable static file upload is enabled. Upgrade to next@v16.3.0-canary.32 or newer to resolve this.` We're on Next 16.3.1 stable, which actually postdates that canary tag — looks like a bug in Vercel's own version comparator (treats prerelease tags as always "newer" than a full release). No CLI surface exists to disable the Toolbar/preview-comments feature; it needs the dashboard (Project Settings → Toolbar, turn off Comments, for the `bookwalk` project). Until then I'm deploying manually every time via `vercel build --prod --yes && vercel deploy --prebuilt --prod --yes` from the repo root, which sidesteps the broken step entirely. **This means the GitHub → Vercel auto-deploy I connected (`vercel git connect`) will silently fail on every push** — worth checking Vercel's deployment list once you're back, and turning off Comments (or re-testing after Vercel ships a fix) before relying on auto-deploy again.
+
+- **`/browse` needs your call, not mine.** It's built and working, but shows "no example yet" until `BROWSE_EXAMPLE_SLUG` is set — publishing your real 220-book library to a public URL is a decision I left for you. If you want it live: publish your own library via `/create`, grab the slug from the resulting `/l/{slug}` URL, and set `BROWSE_EXAMPLE_SLUG` (plus optionally `BROWSE_EXAMPLE_NAME`) as a Vercel env var, then redeploy.
+
+- **The publish flow has no edit page yet.** Publishing works and gives you a real edit token (also saved to `localStorage`), but there's no UI that actually uses it — `PATCH`/`DELETE /api/libraries/edit/[editToken]` exist and work (I tested both directly), just nothing in `/create` links to them. Re-import-and-republish is the only way to change a published library right now. Worth building before you'd actually want people using this for real, but not one of M4's explicit done-criteria, so I didn't block on it.
 
 ## Log
 
@@ -48,6 +52,18 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - Also updated `packages/viewer/types/index.d.ts` — the hand-written `.d.ts` (per D23, viewer stays plain JS) was stale, missing `enter()`/`enterAnimated()`/`teleportTo()` and the rest of the test-hook surface that M2's `index.js` actually implements; TypeScript in `apps/web` would have silently allowed calling nonexistent methods without this.
 - Verified end-to-end with rodney against `apps/web`'s real dev AND production builds (not just the standalone package): CSV upload → review numbers/histogram/warnings match the fixture exactly → customize step renders a live walkable room → switching preset (Reading Room → Study) correctly destroys and remounts with the new theme, visibly different mood → publish button fires without error.
 - Used the anonymized 30-row fixture for all of this testing, never the real personal export, since this is now app-level testing that could plausibly get screenshotted/logged.
+
+### M4 — done
+- `lib/store.ts`: the one file that touches Redis, per PLAN.md §3. `bookwalk:lib:{slug}`, `bookwalk:meta:{slug}`, `bookwalk:edit:{token}`, all under the shared Upstash database's namespace prefix as planned — never touched anything outside that prefix.
+- `POST /api/libraries` (publish, rate-limited 5/IP/day via `@upstash/ratelimit`, 2 MB / 5000-book guard, zod-validated), `GET /api/libraries/[slug]` (read, ISR-cacheable), `PATCH`/`DELETE /api/libraries/edit/[editToken]` (owner-authenticated via the edit token — no accounts, per D7), `DELETE /api/admin/libraries/[slug]` (admin-token nuke per D30, closed by default unless `ADMIN_TOKEN` is set).
+- `/l/[slug]` is a server component (`revalidate = 60`, matches §6's ISR-behind-`updatedAt` plan) that fetches the manifest and hands it to a client component that mounts `@bw/viewer`; 404s cleanly via `notFound()` for an unknown slug; `generateMetadata` sets a real page title per library.
+- `/browse` (D4/D6): built the static one-entry page, but **left it genuinely empty** — it reads `BROWSE_EXAMPLE_SLUG` from an env var and shows a "no example yet" message if unset, rather than fabricating a slug. Publishing your own real 220-book reading history to a public URL is your call to make, not mine to make on your behalf overnight — see "Needs Jakub" below.
+- `/create`'s Customize step now really publishes (`POST /api/libraries`) instead of only downloading — shows the live public link and the edit token on success, and still keeps a "Download manifest" button alongside it. The edit token is also stashed in `localStorage` under `bookwalk:my-libraries` per D7, though **there's no actual edit page yet** — re-import-and-republish is the only path today. Noting this as a real gap, not hiding it.
+- Verified live end-to-end against the real shared Upstash database (not mocked): published two throwaway test manifests through the actual API and through the real UI via rodney, confirmed `/l/{slug}` serves a walkable published library, confirmed the delete-by-edit-token endpoint works, and **deleted both test entries afterward** — the shared Redis is back to exactly the state it was in before tonight (only the `bookwalk:` prefix was touched, and nothing was left behind in it).
+- Verified the size guard (5001-book manifest correctly rejected with a 413-equivalent JSON error) and schema validation (garbage body correctly rejected with a detailed 400).
+- `apps/web/.env.local` is now a symlink to the repo-root `.env.local` — Next.js only reads env files from the app directory it builds from, not the monorepo root, so local `npm run build`/`start` were silently missing the Upstash credentials until I found and fixed this. Vercel's own deployed env vars (set in M0) are unaffected by this — that's a separate mechanism.
+
+**Needs Jakub**: `/browse` has no example library until you decide to publish your own and set `BROWSE_EXAMPLE_SLUG` (and optionally `BROWSE_EXAMPLE_NAME`) in Vercel's env vars. This is deliberately not something I did for you — publishing your real reading history to a public, permanent URL is exactly the kind of call the plan tells me to leave to you when it's irreversible-ish and personal.
 
 ### M1 — done
 - Real `parseStoryGraphCsv`/`buildManifest`, all field-normalization rules from manifest-schema.md §2.5.
