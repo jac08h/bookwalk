@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { argv } from "node:process";
-import { parseStoryGraphCsv, buildManifest } from "./index.js";
+import { parseStoryGraphCsv, buildManifest } from "./index";
 
 function main(): void {
   const csvPath = argv[2];

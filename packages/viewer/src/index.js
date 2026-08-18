@@ -226,7 +226,6 @@ export function createLibrary(root, manifest, opts = {}) {
     }
 
     started = true;
-    if (opts.onReady) opts.onReady();
   }
 
   let hintTimer = null;
@@ -574,11 +573,17 @@ export function createLibrary(root, manifest, opts = {}) {
     if (started && !readyFlagged) {
       readyFlagged = true;
       if (bootEl) bootEl.classList.add("bw-gone");
+      if (opts.onReady) opts.onReady();
     }
     rafId = requestAnimationFrame(animate);
   }
 
-  start();
+  try {
+    start();
+  } catch (err) {
+    showFallback("Something went wrong building the library.");
+    if (opts.onError) opts.onError(err);
+  }
   rafId = requestAnimationFrame(animate);
 
   function findRecord(id) {

@@ -1,4 +1,4 @@
-import { CURRENT_VERSION, ManifestSchema, type Manifest } from "./schema.js";
+import { CURRENT_VERSION, ManifestSchema, type Manifest } from "./schema";
 
 export function migrate(input: unknown): Manifest {
   if (typeof input !== "object" || input === null) {

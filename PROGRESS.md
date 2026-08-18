@@ -7,7 +7,7 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - [x] M0 — Skeleton
 - [x] M1 — Importer
 - [x] M2 — Viewer package (stop-and-look checkpoint)
-- [ ] M3 — Create flow, client-only
+- [x] M3 — Create flow, client-only
 - [ ] M4 — Persistence & sharing
 - [ ] M5 — Launch readiness
 
@@ -39,6 +39,15 @@ Working through docs/PLAN.md milestones M0-M5 unsupervised, per "low-contact" op
 - Did not verify: the WebGL-unavailable fallback path in a real no-WebGL browser, mobile/touch viewport via CDP device emulation. Lower-risk (fallback is a simple early-return already covered by a code read; touch mode's input plumbing in `touch.js` was copied verbatim from previously-tested working code) but still unverified by me tonight.
 
 **M2 status: functionally done, real end-to-end walkthrough confirmed working with the real 220-book export.** This is the plan's explicit stop-and-look checkpoint (§5) — my read as an agent, not a substitute for your own: the room built from bare title/author/year does read as something worth walking through. The library-card treatment (D20) carries the thin data well — the date-stamp/rating/review layout reads as a genuine artifact rather than a bug, exactly as D20 hoped. Recommend you actually walk through it yourself once you're back (`cd packages/viewer/dev && python3 -m http.server`, or wait for M3's real /create flow) before deciding whether to keep going past M3.
+
+### M3 — done
+- `/create` (`apps/web/app/create/`) is a client component with three internal steps sharing state: Import (drag/drop or click-to-browse CSV, 10 MB guard, parsed entirely in-browser via `@bw/importer`), Review (status totals, per-year histogram, warning list, display-name input, to-read/currently-reading toggles per D10/D11), Customize (5-preset grid + a live `createLibrary()` preview, publish stubbed to a client-side `Blob` download of the manifest JSON — no network calls anywhere in the flow, verified via `performance.getEntriesByType('resource')` showing zero non-static requests after page load, matching M3's done criterion).
+- **Two real bugs found and fixed via the real React integration** that the standalone dev page's plain-script usage never exercised:
+  1. **Module resolution**: `@bw/manifest`/`@bw/importer` use NodeNext-style `.js`-suffixed relative imports pointing at `.ts` files on disk (correct for `tsc`/`tsx`/Node, and Vite/Vitest tolerate it too) — but Next 16's Turbopack bundler doesn't do `.js`→`.ts` extension aliasing, and there's no config surface for it (webpack's `resolve.extensionAlias` doesn't apply under Turbopack, and `turbopack.resolveExtensions` only affects extension-less specifiers, not remapping). Fixed by dropping `.js` from the internal relative imports in both packages — works identically everywhere now.
+  2. **`onReady` timing (the interesting one)**: `createLibrary()`'s `opts.onReady` callback was firing *synchronously*, inside `start()`, before `createLibrary()` had returned its own handle — so `apps/web`'s `CustomizeStep.tsx` (`const handle = createLibrary(...)` with `onReady: () => handle.enter()`) hit a real `ReferenceError: Cannot access 'handle' before initialization` (TDZ) every time. The dev page's plain `<script>` usage never caught this because `window.__library = handle` happened to be assigned after the whole synchronous call completed either way, masking the bug. Root cause: I'd wired `onReady()` to fire at the end of `start()` (scene-graph built) rather than — as the original source's `window.__LIBRARY_READY` did — on the first actually-rendered animation frame, which is inherently async via `requestAnimationFrame`. Moved the call to where `readyFlagged` is set inside `animate()`; this is both the correct fix and the correct semantics (matches the ported code's own "ready" meaning).
+- Also updated `packages/viewer/types/index.d.ts` — the hand-written `.d.ts` (per D23, viewer stays plain JS) was stale, missing `enter()`/`enterAnimated()`/`teleportTo()` and the rest of the test-hook surface that M2's `index.js` actually implements; TypeScript in `apps/web` would have silently allowed calling nonexistent methods without this.
+- Verified end-to-end with rodney against `apps/web`'s real dev AND production builds (not just the standalone package): CSV upload → review numbers/histogram/warnings match the fixture exactly → customize step renders a live walkable room → switching preset (Reading Room → Study) correctly destroys and remounts with the new theme, visibly different mood → publish button fires without error.
+- Used the anonymized 30-row fixture for all of this testing, never the real personal export, since this is now app-level testing that could plausibly get screenshotted/logged.
 
 ### M1 — done
 - Real `parseStoryGraphCsv`/`buildManifest`, all field-normalization rules from manifest-schema.md §2.5.

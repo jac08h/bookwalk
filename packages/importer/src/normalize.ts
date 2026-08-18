@@ -1,7 +1,7 @@
 import type { Book, BookFormat, BookStatus } from "@bw/manifest";
-import type { RawRow, Warning } from "./parse.js";
-import { parseDatesRead, yearFromLastDateRead } from "./dates.js";
-import { bookId, visualSeeds } from "./seeds.js";
+import type { RawRow, Warning } from "./parse";
+import { parseDatesRead, yearFromLastDateRead } from "./dates";
+import { bookId, visualSeeds } from "./seeds";
 
 const FORMAT_MAP: Record<string, BookFormat> = {
   paperback: "paperback",

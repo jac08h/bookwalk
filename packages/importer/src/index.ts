@@ -1,10 +1,10 @@
 import type { Book } from "@bw/manifest";
-import { parseStoryGraphCsv as parseCsvRows, type Warning } from "./parse.js";
-import { normalizeRow } from "./normalize.js";
+import { parseStoryGraphCsv as parseCsvRows, type Warning } from "./parse";
+import { normalizeRow } from "./normalize";
 
-export type { Warning, RawRow } from "./parse.js";
-export type { BuildOptions } from "./build.js";
-export { buildManifest } from "./build.js";
+export type { Warning, RawRow } from "./parse";
+export type { BuildOptions } from "./build";
+export { buildManifest } from "./build";
 
 export type ImportStats = {
   rowCount: number;
